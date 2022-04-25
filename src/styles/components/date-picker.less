@@ -8,6 +8,37 @@
     //position: relative;
     display: inline-block;
     line-height: normal;
+    &-shortcut-dropdown{ 
+        position: relative;
+    }
+    &-shortcut-dropdown &-rel{
+        margin-right: 110px;
+    }
+    &-shortcut-dropdown &-shortcut-menu{
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+    &-shortcut-dropdown &-shortcut-menu &-shortcut-item{
+        float: left;
+        padding: 8px 3px;
+        text-align: center;
+        color: #64676F;
+        transition: all @transition-time @ease-in-out;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 100%;
+
+        &:hover{
+            background: @border-color-split;
+        }
+    }
+    &-shortcut-dropdown &-shortcut-menu  &-shortcut-item-g1{
+        width: 50%;
+    }
+
     &-rel{
         position: relative;
     }
@@ -54,7 +85,7 @@
                 box-shadow: 0 0 0 1px @primary-color inset;
             }
         }
-
+        
         &-cell{
             span&{
                 width: 28px;
@@ -235,7 +266,7 @@
         width: auto;
     }
 
-    &-focused input:not([disabled]){
+    &-focused input{
         .active();
     }
 }
@@ -247,7 +278,7 @@
             width: 20px;
             height: 24px;
             line-height: 26px;
-            margin-top: 2px;
+            margin-top: 4px;
             text-align: center;
             cursor: pointer;
             color: @btn-disable-color;
@@ -276,7 +307,10 @@
             overflow: auto;
         }
         &-shortcut{
-            padding: 6px @padding-md;
+            float: left;
+            padding: 8px 3px;
+            text-align: center;
+            color: #64676F;
             transition: all @transition-time @ease-in-out;
             cursor: pointer;
             overflow: hidden;
@@ -286,6 +320,12 @@
             &:hover{
                 background: @border-color-split;
             }
+        }
+        &-shortcut-g1{
+            width: 50%;
+        }
+        &-shortcut-g2{
+            width: 100%;
         }
         &-body{
             float: left;

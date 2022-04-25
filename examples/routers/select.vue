@@ -1,105 +1,71 @@
 <template>
-    <div style="margin: 100px;">
-        <Select v-model="model1" filterable style="width:200px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+   <div>
+       <h2 style="margin-top:20px">multiple + clearable</h2>
+       <p style="margin: 10px 0">1. 多选也可一键清除</p>
+        <Select
+            multiple
+            :max-tag-count="1"
+            v-model="formValidate.ainterest"
+            clearable
+        >
+            <Option value="Eat">Eat</Option>
+            <Option value="Sleep">Sleep</Option>
+            <Option value="Run">Run</Option>
+            <Option value="Movie">Movie</Option>
+        </Select>
+        
+       <h2 style="margin-top:20px">filterable clearable</h2>
+       <p style="margin: 10px 0">2. 单选时不保留搜索结果，即每次重新弹出都是全部选项</p>
+       <Select v-model='test' filterable clearable>
+            <Option v-for='item in list' :value='item.value' :label="item.name" :key="item.value"></Option>
+            <div slot="empty">2222</div>
         </Select>
 
-        <Select v-model="model10" filterable :max-tag-count="2" multiple style="width:400px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        <h2 style="margin-top:20px">filterable clearable OptionGroup</h2>
+        <Select v-model="model11" filterable clearable>
+            <OptionGroup label="分组">
+                <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </OptionGroup>
         </Select>
 
-        <Select v-model="model10" filterable :max-tag-count="2" multiple style="width:400px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        <h2 style="margin-top:20px">OptionGroup</h2>
+        <Select v-model="model12">
+            <OptionGroup label="分组">
+                <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </OptionGroup>
         </Select>
-
-        <br><br>
-
-        <Select v-model="model1" style="width:200px">
-            <Icon type="ios-alarm" slot="prefix" color="red" />
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-
-        <Select v-model="model1" style="width:200px">
-            <Avatar src="https://dev-file.iviewui.com/userinfoPDvn9gKWYihR24SpgC319vXY8qniCqj4/avatar" slot="prefix" size="small" />
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-
-        <Select v-model="model10" :max-tag-count="3" :max-tag-placeholder="more" multiple style="width:400px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-
-        <br><br>
-
-        <Select size="small" v-model="model1" style="width:200px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-
-        <Select size="small" v-model="model10" multiple style="width:400px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-
-        <br><br>
-
-        <Select size="large" v-model="model1" style="width:200px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-
-        <Select size="large" v-model="model10" multiple style="width:400px" prefix="ios-albums">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Divider></Divider>
-        <Select v-model="model13" filterable allow-create @on-create="handleCreate" style="width:260px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model12" multiple filterable allow-create @on-create="handleCreate" style="width:260px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Divider></Divider>
-        <Select v-model="model31" size="small" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model31" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model31" size="large" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Divider></Divider>
-        <Select v-model="model31" filterable size="small" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model31" filterable style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model31" filterable size="large" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Divider></Divider>
-        <Select v-model="model34" multiple size="small" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model34" multiple style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model34" multiple size="large" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Divider></Divider>
-        <Select v-model="model34" filterable multiple size="small" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model34" filterable multiple style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        <Select v-model="model34" filterable allow-create multiple size="large" style="width:200px">
-            <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-    </div>
+   </div>
 </template>
 <script>
     export default {
         data () {
             return {
+                formValidate: {
+                    ainterest: [],
+                    binterest: [],
+                },
+                ruleValidate: {
+                    ainterest: [
+                        { required: true, type: 'array', min: 1, message: 'Choose at least one hobby', trigger: 'change' },
+                    ],
+                    binterest: [
+                        { required: true, type: 'array', min: 1, message: 'Choose at least one hobby', trigger: 'change' },
+                    ],
+                },
+                test: '',
+                list:[{
+                    name: '测试测试2',
+                    value:1
+                },{
+                    name: 'dddddd',
+                    value:2
+                },{
+                    name:'测试测试',
+                    value:8
+                },{
+                    name: '\"年龄\"123',
+                    value:9
+                }],
                 cityList: [
                     {
                         value: 'New York',
@@ -126,29 +92,11 @@
                         label: 'Canberra'
                     }
                 ],
-                model1: '',
-                model10: [],
-                model12: [],
-                model13: '',
-                model31: '',
-                model32: '',
-                model33: '',
-                model34: [],
-                model35: [],
-                model36: []
-            }
+                model11: '',
+                model12: '',
+                model1: ''
+            };
         },
-        methods: {
-            more (num) {
-                return 'more' + num;
-            },
-            handleCreate (val) {
-                console.log(111,val);
-                this.cityList.push({
-                    value: val,
-                    label: val
-                });
-            }
-        }
-    }
+    };
 </script>
+

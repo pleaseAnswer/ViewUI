@@ -5,7 +5,7 @@ import RangeDatePickerPanel from '../panel/Date/date-range.vue';
 import { oneOf, deepCopy } from '../../../utils/assist';
 
 export default {
-    name: 'DatePicker',
+    name: 'CalendarPicker',
     mixins: [Picker],
     props: {
         type: {
@@ -22,7 +22,7 @@ export default {
             return isRange ? 'RangeDatePickerPanel' : 'DatePickerPanel';
         },
         ownPickerProps(){
-            // 增加 shortcutsArr 字段 过滤左侧快捷日期项
+            // return this.options;
             let callbackOption = deepCopy(this.options);
             if(callbackOption.shortcuts instanceof Array && callbackOption.shortcutsArr && (callbackOption.shortcutsArr instanceof Array)) {
                 for (var i = callbackOption.shortcuts.length - 1; i >= 0; i--) {

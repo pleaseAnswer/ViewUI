@@ -249,7 +249,7 @@
                 if (this.enterTimer) clearTimeout(this.enterTimer);
                 this.enterTimer = setTimeout(() => {
                     this.visible = true;
-                }, 100);
+                }, 0);
             },
             handleMouseleave () {
                 if (this.trigger !== 'hover' || this.confirm) {
@@ -259,7 +259,7 @@
                     clearTimeout(this.enterTimer);
                     this.enterTimer = setTimeout(() => {
                         this.visible = false;
-                    }, 100);
+                    }, 0);
                 }
             },
             cancel () {

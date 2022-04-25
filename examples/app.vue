@@ -5,6 +5,8 @@
     <div class="container">
         <div>
             <div>
+                <span><router-link to="/select">Select</router-link></span>
+                <span><router-link to="/date">Date</router-link></span>
                 <span><router-link to="/split">Split</router-link></span>
                 <span><router-link to="/layout">Layout</router-link></span>
                 <span><router-link to="/affix">Affix</router-link></span>
@@ -38,11 +40,9 @@
                 <span><router-link to="/menu">Menu</router-link></span>
                 <span><router-link to="/spin">Spin</router-link></span>
                 <span><router-link to="/cascader">Cascader</router-link></span>
-                <span><router-link to="/select">Select</router-link></span>
                 <span><router-link to="/backtop">Backtop</router-link></span>
                 <span><router-link to="/page">Page</router-link></span>
                 <span><router-link to="/transfer">Transfer</router-link></span>
-                <span><router-link to="/date">Date</router-link></span>
                 <span><router-link to="/form">Form</router-link></span>
                 <span><router-link to="/table">Table</router-link></span>
                 <span><router-link to="/loading-bar">LoadingBar</router-link></span>

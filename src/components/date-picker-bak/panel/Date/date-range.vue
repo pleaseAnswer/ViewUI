@@ -1,5 +1,6 @@
 <template>
     <div :class="classes" @mousedown.prevent>
+        <!-- <div :class="[prefixCls + '-sidebar']" v-if="shortcuts.length"> -->
         <div :class="[prefixCls + '-sidebar']" v-if="shortcuts.length&&!shortcutUnique">
             <div
                 :class="[prefixCls + '-shortcut', (shortcut.grid === 1 ? prefixCls + '-shortcut-g1' : prefixCls + '-shortcut-g2')]"
@@ -152,7 +153,6 @@
                 type: Boolean,
                 default: false
             },
-            // 快捷选择独立
             shortcutUnique: {
                 type: Boolean,
                 default: false
@@ -186,7 +186,7 @@
                         }
                     ];
                 } else {
-                     return [
+                    return [
                         `${prefixCls}-body-wrapper`,
                         `${datePrefixCls}-with-range`,
                         {
@@ -330,18 +330,12 @@
             },
             changePanelDate(panel, type, increment, updateOtherPanel = true){
                 const current = new Date(this[`${panel}PanelDate`]);
-                
-                // if (this.splitPanels) {
-                //     // fix #6404
-                //     current[`set${type}`](current[`get${type}`]() + increment);
-                // } else {
-                //     if (panel === 'left') {
-                //         current[`set${type}`](current[`get${type}`]() + increment);
-                //     } else {
-                //         current[`set${type}`](current[`get${type}`]() + increment);
-                //     }
-                // }
-                current[`set${type}`](current[`get${type}`]() + increment);
+                // fix https://github.com/view-design/ViewUI/issues/418
+                // 强行把左视图日期设置为1号
+                // FullYear 不能设置https://github.com/iview/iview/issues/6600
+                if (type === 'FullYear') current[`set${type}`](current[`get${type}`]() + increment);
+                else current[`set${type}`](current[`get${type}`]() + increment, 1);
+
                 this[`${panel}PanelDate`] = current;
 
                 if (!updateOtherPanel) return;
@@ -398,7 +392,7 @@
                     if (this.currentView === 'time'){
                         this.dates = val;
                     } else {
-                        const [minDate, maxDate] = [this.rangeState.from, val].sort(dateSorter);
+                        let [minDate, maxDate] = [this.rangeState.from, val].sort(dateSorter);
                         if(this.endDateSetMaxTime) {
                             maxDate.setHours(23)
                             maxDate.setMinutes(59)

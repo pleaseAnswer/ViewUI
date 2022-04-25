@@ -1,9 +1,9 @@
 <template>
     <div
         :class="classes"
-        v-click-outside:[capture]="onClickOutside"
-        v-click-outside:[capture].mousedown="onClickOutside"
-        v-click-outside:[capture].touchstart="onClickOutside"
+        v-click-outside.capture="onClickOutside"
+        v-click-outside:mousedown.capture="onClickOutside"
+        v-click-outside:touchstart.capture="onClickOutside"
     >
         <div
             ref="reference"
@@ -22,8 +22,10 @@
             @keydown.tab="handleKeydown"
             @keydown.delete="handleKeydown"
 
+
             @mouseenter="hasMouseHoverHead = true"
             @mouseleave="hasMouseHoverHead = false"
+
         >
             <slot name="input">
                 <input type="hidden" :name="name" :value="publicValue">
@@ -33,7 +35,7 @@
                     :values="values"
                     :clearable="canBeCleared"
                     :prefix="prefix"
-                    :disabled="itemDisabled"
+                    :disabled="disabled"
                     :remote="remote"
                     :input-element-id="elementId"
                     :initial-label="initialLabel"
@@ -41,14 +43,11 @@
                     :query-prop="query"
                     :max-tag-count="maxTagCount"
                     :max-tag-placeholder="maxTagPlaceholder"
-                    :allow-create="allowCreate"
-                    :show-create-item="showCreateItem"
 
                     @on-query-change="onQueryChange"
-                    @on-input-focus="isFocused = true"
+                    @on-input-focus="onInputFocus"
                     @on-input-blur="isFocused = false"
                     @on-clear="clearSingleSelect"
-                    @on-enter="handleCreateItem"
                 >
                     <slot name="prefix" slot="prefix"></slot>
                 </select-head>
@@ -63,29 +62,18 @@
                 :data-transfer="transfer"
                 :transfer="transfer"
                 v-transfer-dom
-                :eventsEnabled="eventsEnabled"
             >
-                <ul v-show="showNotFoundLabel && !allowCreate" :class="[prefixCls + '-not-found']"><li>{{ localeNotFoundText }}</li></ul>
-
-                <functional-options
-                    v-if="(!remote) || (remote && !loading)"
-                    :options="selectOptions"
-                    :slot-update-hook="updateSlotOptions"
-                    :slot-options="slotOptions"
-                    :class="prefixCls + '-dropdown-list'"
-                >
-                    <li :class="prefixCls + '-item'" v-if="showCreateItem" @click="handleCreateItem">
-                        {{ query }}
-                        <Icon type="md-return-left" :class="prefixCls + '-item-enter'" />
-                    </li>
-                </functional-options>
-                <ul :class="prefixCls + '-dropdown-list'" v-else>
-                    <li :class="prefixCls + '-item'" v-if="showCreateItem" @click="handleCreateItem">
-                        {{ query }}
-                        <Icon type="md-return-left" :class="prefixCls + '-item-enter'" />
-                    </li>
+                <ul v-show="showNotFoundLabel && !$slots.empty" :class="[prefixCls + '-not-found']"><li>{{ localeNotFoundText }}</li></ul>
+                <!--feature #5327-->
+                <ul v-if="showNotFoundLabel && $slots.empty" :class="[prefixCls + '-not-found']"  @mousedown.prevent><li><slot name="empty"></slot></li></ul>
+                <ul :class="prefixCls + '-dropdown-list'">
+                    <functional-options
+                        v-if="(!remote) || (remote && !loading)"
+                        :options="selectOptions"
+                        :slot-update-hook="updateSlotOptions"
+                        :slot-options="slotOptions"
+                    ></functional-options>
                 </ul>
-
                 <ul v-show="loading" :class="[prefixCls + '-loading']">{{ localeLoadingText }}</ul>
             </Drop>
         </transition>
@@ -93,12 +81,10 @@
 </template>
 <script>
     import Drop from './dropdown.vue';
-    import Icon from '../icon';
-    import {directive as clickOutside} from '../../directives/v-click-outside-x';
+    import {directive as clickOutside} from 'v-click-outside-x';
     import TransferDom from '../../directives/transfer-dom';
-    import { oneOf, findComponentsDownward } from '../../utils/assist';
+    import { oneOf } from '../../utils/assist';
     import Emitter from '../../mixins/emitter';
-    import mixinsForm from '../../mixins/form';
     import Locale from '../../mixins/locale';
     import SelectHead from './select-head.vue';
     import FunctionalOptions from './functional-options.vue';
@@ -119,7 +105,7 @@
 
     const findOptionsInVNode = (node) => {
         const opts = node.componentOptions;
-        if (opts && optionRegexp.test(opts.tag)) return [node];
+        if (opts && opts.tag.match(optionRegexp)) return [node];
         if (!node.children && (!opts || !opts.children)) return [];
         const children = [...(node.children || []), ...(opts && opts.children || [])];
         const options = children.reduce(
@@ -171,8 +157,8 @@
 
     export default {
         name: 'iSelect',
-        mixins: [ Emitter, Locale, mixinsForm ],
-        components: { FunctionalOptions, Drop, SelectHead, Icon },
+        mixins: [ Emitter, Locale ],
+        components: { FunctionalOptions, Drop, SelectHead },
         directives: { clickOutside, TransferDom },
         props: {
             value: {
@@ -181,11 +167,6 @@
             },
             // 使用时，也得设置 value 才行
             label: {
-                type: [String, Number, Array],
-                default: ''
-            },
-            // 4.4.0
-            defaultLabel: {
                 type: [String, Number, Array],
                 default: ''
             },
@@ -273,36 +254,12 @@
             // 3.4.0
             maxTagPlaceholder: {
                 type: Function
-            },
-            // 4.0.0
-            allowCreate: {
-                type: Boolean,
-                default: false
-            },
-            // 4.0.0
-            capture: {
-                type: Boolean,
-                default () {
-                    return !this.$IVIEW ? true : this.$IVIEW.capture;
-                }
-            },
-            // 4.2.0
-            // 搜索时，只按 label 进行搜索
-            filterByLabel: {
-                type: Boolean,
-                default: false
-            },
-            // 4.6.0
-            eventsEnabled: {
-                type: Boolean,
-                default: false
             }
         },
         mounted(){
             this.$on('on-select-selected', this.onOptionClick);
-
             // set the initial values if there are any
-            if (!this.remote && this.selectOptions.length > 0){
+            if ( this.selectOptions.length > 0){
                 this.values = this.getInitialValue().map(value => {
                     if (typeof value !== 'number' && !value) return null;
                     return this.getOptionData(value);
@@ -310,27 +267,6 @@
             }
 
             this.checkUpdateStatus();
-
-            // remote search, set default-label
-            if (this.remote && this.value && this.defaultLabel) {
-                if (!this.multiple) {
-                    this.query = this.defaultLabel;
-                } else if (this.multiple && (this.defaultLabel instanceof Array) && this.value.length === this.defaultLabel.length) {
-                    const values = this.value.map((item, index) => {
-                        return {
-                            value: item,
-                            label: this.defaultLabel[index]
-                        };
-                    });
-                    this.$emit('on-set-default-options', JSON.parse(JSON.stringify(values)));
-                    setTimeout(() => {
-                        this.values = values;
-                    });
-                }
-            }
-        },
-        beforeDestroy () {
-            this.$off('on-select-selected');
         },
         data () {
             return {
@@ -348,9 +284,10 @@
                 lastRemoteQuery: '',
                 unchangedQuery: true,
                 hasExpectedValue: false,
-                isTyping: false,  // #728
                 preventRemoteCall: false,
                 filterQueryChange: false,  // #4273
+                // #6349
+                hideMenuTimer: null
             };
         },
         computed: {
@@ -359,7 +296,7 @@
                     `${prefixCls}`,
                     {
                         [`${prefixCls}-visible`]: this.visible,
-                        [`${prefixCls}-disabled`]: this.itemDisabled,
+                        [`${prefixCls}-disabled`]: this.disabled,
                         [`${prefixCls}-multiple`]: this.multiple,
                         [`${prefixCls}-single`]: !this.multiple,
                         [`${prefixCls}-show-clear`]: this.showCloseIcon,
@@ -395,17 +332,6 @@
                     return this.loadingText;
                 }
             },
-            showCreateItem () {
-                let state = false;
-                if (this.allowCreate && this.query !== '') {
-                    state = true;
-                    const $options = findComponentsDownward(this, 'iOption');
-                    if ($options && $options.length) {
-                        if ($options.find(item => item.optionLabel === this.query)) state = false;
-                    }
-                }
-                return  state;
-            },
             transitionName () {
                 return this.placement === 'bottom' ? 'slide-up' : 'slide-down';
             },
@@ -423,17 +349,16 @@
                 return selectOptions && selectOptions.length === 0 && (!remote || (remote && !loading));
             },
             publicValue(){
-                // 改变 labelInValue 实现，解决 bug:Select，label-in-value时，搜索、多选，先选一个，再选第二个，会替代第一个
-                // if (this.labelInValue){
-                //     return this.multiple ? this.values : this.values[0];
-                // } else {
-                //     return this.multiple ? this.values.map(option => option.value) : (this.values[0] || {}).value;
-                // }
-                return this.multiple ? this.values.map(option => option.value) : (this.values[0] || {}).value;
+                if (this.labelInValue){
+                    return this.multiple ? this.values : this.values[0];
+                } else {
+                    return this.multiple ? this.values.map(option => option.value) : (this.values[0] || {}).value;
+                }
             },
             canBeCleared(){
                 const uiStateMatch = this.hasMouseHoverHead || this.active;
-                const qualifiesForClear = !this.multiple && !this.itemDisabled && this.clearable;
+                // 多选能一键删除已选项
+                const qualifiesForClear = !this.disabled && this.clearable;
                 return uiStateMatch && qualifiesForClear && this.reset; // we return a function
             },
             selectOptions() {
@@ -464,11 +389,11 @@
 
                     const cOptions = option.componentOptions;
                     if (!cOptions) continue;
-                    if (optionGroupRegexp.test(cOptions.tag)){
+                    if (cOptions.tag.match(optionGroupRegexp)){
                         let children = cOptions.children;
 
                         // remove filtered children
-                        if (this.filterable && this.isTyping){  // #728 let option show full when reclick it
+                        if (this.filterQueryChange){
                             children = children.filter(
                                 ({componentOptions}) => this.validateOption(componentOptions)
                             );
@@ -488,9 +413,8 @@
                             const optionPassesFilter = this.filterable ? this.validateOption(cOptions) : option;
                             if (!optionPassesFilter) continue;
                         }
-
                         optionCounter = optionCounter + 1;
-                        selectOptions.push(this.processOption(option, selectedValues, optionCounter === currentIndex));
+                        selectOptions.push(this.processOption(option, selectedValues, currentIndex === optionCounter));
                     }
                 }
 
@@ -500,7 +424,7 @@
                 return extractOptions(this.selectOptions);
             },
             selectTabindex(){
-                return this.itemDisabled || this.filterable ? -1 : 0;
+                return this.disabled || this.filterable ? -1 : 0;
             },
             remote(){
                 return typeof this.remoteMethod === 'function';
@@ -520,22 +444,17 @@
                 }
             },
             clearSingleSelect(){ // PUBLIC API
-                // fix #446
-                if (!this.multiple) this.$emit('input', '');
-                this.$emit('on-clear');
                 this.hideMenu();
                 if (this.clearable) this.reset();
+                this.$emit('on-clear'); // #6331
             },
             getOptionData(value){
                 const option = this.flatOptions.find(({componentOptions}) => componentOptions.propsData.value === value);
                 if (!option) return null;
                 const label = getOptionLabel(option);
-                // 修复多选时，选项有disabled属性，选中项仍然能删除的 bug
-                const disabled = option.componentOptions.propsData.disabled;
                 return {
                     value: value,
                     label: label,
-                    disabled: disabled
                 };
             },
             getInitialValue(){
@@ -555,7 +474,6 @@
                 const optionValue = option.componentOptions.propsData.value;
                 const disabled = option.componentOptions.propsData.disabled;
                 const isSelected = values.includes(optionValue);
-
                 const propsData = {
                     ...option.componentOptions.propsData,
                     selected: isSelected,
@@ -573,19 +491,22 @@
             },
 
             validateOption({children, elm, propsData}){
-                const value = propsData.value;
                 const label = propsData.label || '';
                 const textContent = (elm && elm.textContent) || (children || []).reduce((str, node) => {
                     const nodeText = node.elm ? node.elm.textContent : node.text;
                     return `${str} ${nodeText}`;
                 }, '') || '';
-                const stringValues = this.filterByLabel ? [label].toString() : [value, label, textContent].toString();
+                const stringValues = [label, textContent];
                 const query = this.query.toLowerCase().trim();
-                return stringValues.toLowerCase().includes(query);
+                const findValuesIndex = stringValues.findIndex(item=>{
+                    let itemToLowerCase = item.toLowerCase();
+                    return itemToLowerCase.includes(query);
+                });
+                return findValuesIndex === -1 ? false : true;
             },
 
             toggleMenu (e, force) {
-                if (this.itemDisabled) {
+                if (this.disabled) {
                     return false;
                 }
 
@@ -595,11 +516,22 @@
                     this.broadcast('Drop', 'on-update-popper');
                 }
             },
+            updateFocusIndex(){
+                this.focusIndex = this.flatOptions.findIndex((opt) => {
+                    if (!opt || !opt.componentOptions) return false;
+                    return opt.componentOptions.propsData.value === this.publicValue;
+                });
+            },
             hideMenu () {
                 this.toggleMenu(null, false);
-                // fix #728
-                this.isTyping = false;
-                setTimeout(() => this.unchangedQuery = true, ANIMATION_TIMEOUT);
+                setTimeout(() =>{
+                    this.unchangedQuery = true;
+                    // resolve if we use filterable, dropItem not selected #6349
+                    this.hideMenuTimer = setTimeout(()=>{
+                        this.updateFocusIndex();
+                        this.hideMenuTimer = null;
+                    });
+                }, ANIMATION_TIMEOUT);
             },
             onClickOutside(event){
                 if (this.visible) {
@@ -644,32 +576,31 @@
             },
             handleKeydown (e) {
                 const key = e.key || e.code;
-                const keyCode = e.keyCode || e.which;
-                if (key === 'Backspace' || keyCode===8){
+                if ( key === 'Backspace'){
                     return; // so we don't call preventDefault
                 }
 
                 if (this.visible) {
                     e.preventDefault();
-                    if (key === 'Tab'){
+                    if ( key === 'Tab'){
                         e.stopPropagation();
                     }
 
                     // Esc slide-up
-                    if (key === 'Escape') {
+                    if ( key === 'Escape') {
                         e.stopPropagation();
                         this.hideMenu();
                     }
                     // next
-                    if (key === 'ArrowUp') {
+                    if ( key === 'ArrowUp') {
                         this.navigateOptions(-1);
                     }
                     // prev
-                    if (key === 'ArrowDown') {
+                    if ( key === 'ArrowDown') {
                         this.navigateOptions(1);
                     }
                     // enter
-                    if (key === 'Enter') {
+                    if ( key === 'Enter') {
                         if (this.focusIndex === -1) return this.hideMenu();
                         const optionComponent = this.flatOptions[this.focusIndex];
 
@@ -690,7 +621,6 @@
             },
             navigateOptions(direction){
                 const optionsLength = this.flatOptions.length - 1;
-                if (optionsLength < 0) return;
 
                 let index = this.focusIndex + direction;
                 if (index < 0) index = optionsLength;
@@ -718,8 +648,8 @@
                 this.focusIndex = index;
             },
             onOptionClick(option) {
+                
                 if (this.multiple){
-
                     // keep the query for remote select
                     if (this.remote) this.lastRemoteQuery = this.lastRemoteQuery || this.query;
                     else this.lastRemoteQuery = '';
@@ -730,7 +660,6 @@
                     } else {
                         this.values = this.values.concat(option);
                     }
-
                     this.isFocused = true; // so we put back focus after clicking with mouse on option elements
                 } else {
                     this.query = String(option.label).trim();
@@ -755,7 +684,6 @@
                 }, ANIMATION_TIMEOUT);
             },
             onQueryChange(query) {
-                this.isTyping = true;
                 if (query.length > 0 && query !== this.query) {
                   // in 'AutoComplete', when set an initial value asynchronously,
                   // the 'dropdown list' should be stay hidden.
@@ -774,9 +702,17 @@
                 this.query = query;
                 this.unchangedQuery = this.visible;
                 this.filterQueryChange = true;
+                if(this.filterable){
+                    this.updateFocusIndex();
+                }
+            },
+            onInputFocus() {
+                this.isFocused = true;
+                // 重新聚焦时 -- 单选 设置不过滤
+                !this.multiple && (this.filterQueryChange = false);
             },
             toggleHeaderFocus({type}){
-                if (this.itemDisabled) {
+                if (this.disabled) {
                     return;
                 }
                 this.isFocused = type === 'focus';
@@ -789,31 +725,15 @@
                     this.hasExpectedValue = true;
                 }
             },
-            // 4.0.0 create new item
-            handleCreateItem () {
-                if (this.allowCreate && this.query !== '' && this.showCreateItem) {
-                    const query = this.query;
-                    this.$emit('on-create', query);
-                    this.query = '';
-
-                    const option = {
-                        value: query,
-                        label: query,
-                        tag: undefined
-                    };
-                    // 单选（和多选，#926）时如果不在 nextTick 里执行，无法赋值
-                    this.$nextTick(() => this.onOptionClick(option));
-                }
-            }
         },
         watch: {
             value(value){
                 const {getInitialValue, getOptionData, publicValue, values} = this;
-
                 this.checkUpdateStatus();
-
+                const vModelValue = (publicValue && this.labelInValue) ? 
+                                    (this.multiple ? publicValue.map(({value}) => value) : publicValue.value) : publicValue;
                 if (value === '') this.values = [];
-                else if (checkValuesNotEqual(value,publicValue,values)) {
+                else if (checkValuesNotEqual(value,vModelValue,values)) {
                     this.$nextTick(() => this.values = getInitialValue().map(getOptionData).filter(Boolean));
                     if (!this.multiple) this.dispatch('FormItem', 'on-form-change', this.publicValue);
                 }
@@ -822,35 +742,22 @@
                 const newValue = JSON.stringify(now);
                 const oldValue = JSON.stringify(before);
                 // v-model is always just the value, event with labelInValue === true
-                // const vModelValue = (this.publicValue && this.labelInValue === false) ?
-                //     (this.multiple ? this.publicValue.map(({value}) => value) : this.publicValue.value) :
-                //     this.publicValue;
-                // 改变 labelInValue 的实现：直接在 emit 时改数据
-                let vModelValue = this.publicValue;
+                const vModelValue = (this.publicValue && this.labelInValue) ?
+                    (this.multiple ? this.publicValue.map(({value}) => value) : this.publicValue.value) :
+                    this.publicValue;
                 const shouldEmitInput = newValue !== oldValue && vModelValue !== this.value;
                 if (shouldEmitInput) {
-                    let emitValue = this.publicValue;
-                    if (this.labelInValue) {
-                        if (this.multiple) {
-                            emitValue = this.values;
-                        } else {
-                            emitValue = this.values[0];
-                        }
-                    }
-
-                    // Form 重置时，如果初始值是 null，也置为 null，而不是 []
-                    if (Array.isArray(vModelValue) && !vModelValue.length && this.value === null) vModelValue = null;
-                    else if (vModelValue === undefined && this.value === null) vModelValue = null;
-
                     this.$emit('input', vModelValue); // to update v-model
-                    this.$emit('on-change', emitValue);
-                    this.dispatch('FormItem', 'on-form-change', emitValue);
+                    this.$emit('on-change', this.publicValue);
+                    this.dispatch('FormItem', 'on-form-change', this.publicValue);
                 }
             },
             query (query) {
                 this.$emit('on-query-change', query);
                 const {remoteMethod, lastRemoteQuery} = this;
-                const hasValidQuery = query !== '' && (query !== lastRemoteQuery || !lastRemoteQuery);
+                // 设置 query 为空时也是有效查询
+                // const hasValidQuery = query !== '' && (query !== lastRemoteQuery || !lastRemoteQuery);
+                const hasValidQuery =  query !== lastRemoteQuery || !lastRemoteQuery;
                 const shouldCallRemoteMethod = remoteMethod && hasValidQuery && !this.preventRemoteCall;
                 this.preventRemoteCall = false; // remove the flag
 
@@ -864,7 +771,8 @@
                         });
                     }
                 }
-                if (query !== '' && this.remote) this.lastRemoteQuery = query;
+                // if (query !== '' && this.remote) this.lastRemoteQuery = query;
+                if (this.remote) this.lastRemoteQuery = query;
             },
             loading(state){
                 if (state === false){
@@ -892,14 +800,15 @@
                 const optionInstance = findChild(this, ({$options}) => {
                     return $options.componentName === 'select-item' && $options.propsData.value === optionValue;
                 });
-
-                let bottomOverflowDistance = optionInstance.$el.getBoundingClientRect().bottom - this.$refs.dropdown.$el.getBoundingClientRect().bottom;
-                let topOverflowDistance = optionInstance.$el.getBoundingClientRect().top - this.$refs.dropdown.$el.getBoundingClientRect().top;
-                if (bottomOverflowDistance > 0) {
-                    this.$refs.dropdown.$el.scrollTop += bottomOverflowDistance;
-                }
-                if (topOverflowDistance < 0) {
-                    this.$refs.dropdown.$el.scrollTop += topOverflowDistance;
+                if(optionInstance && optionInstance.$el ){
+                    let bottomOverflowDistance = optionInstance.$el.getBoundingClientRect().bottom - this.$refs.dropdown.$el.getBoundingClientRect().bottom;
+                    let topOverflowDistance = optionInstance.$el.getBoundingClientRect().top - this.$refs.dropdown.$el.getBoundingClientRect().top;
+                    if (bottomOverflowDistance > 0) {
+                        this.$refs.dropdown.$el.scrollTop += bottomOverflowDistance;
+                    }
+                    if (topOverflowDistance < 0) {
+                        this.$refs.dropdown.$el.scrollTop += topOverflowDistance;
+                    }
                 }
             },
             dropVisible(open){
